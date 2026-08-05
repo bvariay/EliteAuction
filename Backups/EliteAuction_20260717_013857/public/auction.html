@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>تفاصيل المزاد</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+<div class="logo">
+🔨 مزاد النخبة
+</div>
+
+</header>
+
+
+
+<section class="auctions">
+
+
+<div id="auctionDetails" class="auction-card">
+
+جاري تحميل تفاصيل المزاد...
+
+</div>
+
+
+</section>
+
+
+
+<script>
+
+
+const container =
+document.getElementById("auctionDetails");
+
+
+const params =
+new URLSearchParams(window.location.search);
+
+
+const id =
+params.get("id");
+
+
+
+async function loadAuction(){
+
+
+try{
+
+
+const response =
+await fetch("/api/auctions/" + id);
+
+
+const auction =
+await response.json();
+
+
+
+container.innerHTML = `
+
+
+${auction.image ?
+
+`
+<img src="${auction.image}"
+style="width:100%;max-height:400px;object-fit:cover;border-radius:15px;">
+`
+
+:
+
+""
+
+}
+
+
+
+<h2>
+${auction.title}
+</h2>
+
+
+<p>
+${auction.description}
+</p>
+
+
+<h3>
+السعر الحالي:
+${auction.current_price || auction.price}
+${auction.currency || "$"}
+</h3>
+
+
+<p>
+التصنيف:
+${auction.category}
+</p>
+
+
+<hr>
+
+
+<h3>
+ضع مزايدتك
+</h3>
+
+
+<input
+id="bidAmount"
+type="number"
+placeholder="مبلغ المزايدة"
+>
+
+
+<br><br>
+
+
+<button onclick="submitBid()">
+زايد الآن
+</button>
+
+
+<hr>
+
+
+<h3>
+سجل المزايدات
+</h3>
+
+
+<div id="bidList">
+
+جاري تحميل المزايدات...
+
+</div>
+
+
+`;
+
+
+
+}
+
+catch(error){
+
+container.innerHTML =
+"حدث خطأ في تحميل المزاد";
+
+console.log(error);
+
+}
+
+
+}
+
+
+
+
+async function submitBid(){
+
+
+const amount =
+Number(
+document.getElementById("bidAmount").value
+);
+
+
+
+const user =
+JSON.parse(
+localStorage.getItem("user")
+);
+
+
+
+if(!user){
+
+alert("يجب تسجيل الدخول أولاً");
+
+return;
+
+}
+
+
+
+if(!amount){
+
+alert("أدخل قيمة المزايدة");
+
+return;
+
+}
+
+
+
+const response =
+await fetch("/api/bids",
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify({
+
+auction_id:id,
+
+user_id:user.id,
+
+amount:amount
+
+})
+
+});
+
+
+
+const data =
+await response.json();
+
+
+
+alert(data.message);
+
+
+
+loadAuction();
+
+loadBids();
+
+
+}
+
+
+
+
+
+async function loadBids(){
+
+
+const response =
+await fetch(
+"/api/bids/" + id
+);
+
+
+const bids =
+await response.json();
+
+
+
+const list =
+document.getElementById("bidList");
+
+
+
+if(!bids.length){
+
+list.innerHTML =
+"لا توجد مزايدات";
+
+return;
+
+}
+
+
+
+list.innerHTML =
+
+
+bids.map(bid=>`
+
+<p>
+
+${bid.name}
+
+-
+
+${bid.amount}
+$
+
+</p>
+
+`).join("");
+
+
+
+}
+
+
+
+
+loadAuction();
+
+loadBids();
+
+
+</script>
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>إدارة المزادات</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+<div class="logo">
+🔨 إدارة مزاد النخبة
+</div>
+
+</header>
+
+
+
+<section class="auctions">
+
+<h2>
+قائمة المزادات
+</h2>
+
+
+<div id="list" class="auction-container">
+
+</div>
+
+
+</section>
+
+
+
+<script>
+
+
+const list =
+document.getElementById("list");
+
+
+
+async function load(){
+
+
+const res =
+await fetch("/api/auctions");
+
+
+const auctions =
+await res.json();
+
+
+
+list.innerHTML="";
+
+
+
+auctions.forEach(a=>{
+
+
+list.innerHTML += `
+
+
+<div class="auction-card">
+
+
+${a.image ?
+`<img src="${a.image}" 
+style="width:100%;height:180px;object-fit:cover;border-radius:10px;">`
+:""}
+
+
+<h3>
+${a.title}
+</h3>
+
+
+<p>
+${a.price} ${a.currency}
+</p>
+
+
+<button onclick="removeAuction(${a.id})">
+
+حذف
+
+</button>
+
+
+</div>
+
+
+`;
+
+
+
+});
+
+
+}
+
+
+
+async function removeAuction(id){
+
+
+if(!confirm("حذف المزاد؟"))
+return;
+
+
+
+await fetch(
+"/api/auctions/"+id,
+{
+
+method:"DELETE"
+
+}
+);
+
+
+
+load();
+
+
+}
+
+
+
+load();
+
+
+</script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,392 @@
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const multer = require("multer");
+const userRoutes =
+require("./routes/users");
+
+const bidRoutes =
+require("./routes/bids");
+
+const auctionRoutes = require("./routes/auctionRoutes");
+const database = require("./database/db");
+
+
+const app = express();
+
+const PORT = 3000;
+
+
+app.use(cors());
+app.use(express.json());
+app.use(
+"/api/users",
+userRoutes
+);
+
+app.use(
+"/api/bids",
+bidRoutes
+);
+
+app.use("/api/auctions", auctionRoutes);
+
+app.use(express.static(
+    path.join(__dirname,"public")
+));
+
+
+app.use(
+"/uploads",
+express.static("uploads")
+);
+
+
+
+const storage = multer.diskStorage({
+
+destination:(req,file,cb)=>{
+
+cb(null,"uploads/");
+
+},
+
+
+filename:(req,file,cb)=>{
+
+cb(
+null,
+Date.now()+"-"+file.originalname
+);
+
+}
+
+});
+
+
+const upload = multer({
+storage
+});
+
+
+
+let db;
+
+
+
+async function start(){
+
+
+db =
+await database.connectDB();
+
+
+
+app.get("/api", (req,res)=>{
+
+
+res.json({
+
+app:"Elite Auction",
+
+database:"SQLite",
+
+status:"running"
+
+});
+
+
+});
+
+
+
+
+// جلب كل المزادات
+
+app.get("/api/auctions",(req,res)=>{
+
+
+const result =
+db.exec(
+"SELECT * FROM auctions ORDER BY id DESC"
+);
+
+
+
+if(!result.length){
+
+return res.json([]);
+
+}
+
+
+
+const rows =
+result[0].values;
+
+
+const columns =
+result[0].columns;
+
+
+
+const auctions =
+rows.map(row=>{
+
+
+let obj={};
+
+
+columns.forEach(
+(c,i)=>obj[c]=row[i]
+);
+
+
+return obj;
+
+
+});
+
+
+
+res.json(auctions);
+
+
+
+});
+
+
+
+
+
+// جلب مزاد واحد
+
+app.get("/api/auctions/:id",(req,res)=>{
+
+
+const stmt =
+db.prepare(
+"SELECT * FROM auctions WHERE id=?"
+);
+
+
+stmt.bind([
+req.params.id
+]);
+
+
+if(stmt.step()){
+
+
+const auction =
+stmt.getAsObject();
+
+
+res.json(auction);
+
+
+}
+
+else{
+
+
+res.status(404).json({
+
+message:"Not found"
+
+});
+
+
+}
+
+
+stmt.free();
+
+
+});
+
+
+
+
+
+// إضافة مزاد
+
+app.post(
+"/api/auctions",
+upload.single("image"),
+(req,res)=>{
+
+
+const image =
+req.file ?
+"/uploads/"+req.file.filename
+:
+null;
+
+
+
+const stmt =
+db.prepare(`
+
+INSERT INTO auctions
+(title,description,category,price,currency,image)
+
+VALUES (?,?,?,?,?,?)
+
+`);
+
+
+
+stmt.run([
+
+req.body.title,
+
+req.body.description,
+
+req.body.category,
+
+req.body.price,
+
+req.body.currency || "$",
+
+image
+
+]);
+
+
+
+stmt.free();
+
+
+database.saveDB();
+
+
+
+res.json({
+
+message:"Auction added"
+
+});
+
+
+});
+
+
+// حذف مزاد
+
+app.delete("/api/auctions/:id",(req,res)=>{
+
+
+const stmt =
+db.prepare(
+"DELETE FROM auctions WHERE id=?"
+);
+
+
+stmt.run([
+req.params.id
+]);
+
+
+stmt.free();
+
+
+database.saveDB();
+
+
+res.json({
+
+message:"deleted"
+
+});
+
+
+});
+
+
+
+
+// تعديل مزاد
+
+app.put("/api/auctions/:id",(req,res)=>{
+
+
+const stmt =
+db.prepare(`
+
+UPDATE auctions SET
+
+title=?,
+description=?,
+category=?,
+price=?,
+currency=?
+
+WHERE id=?
+
+`);
+
+
+
+stmt.run([
+
+req.body.title,
+
+req.body.description,
+
+req.body.category,
+
+req.body.price,
+
+req.body.currency,
+
+req.params.id
+
+]);
+
+
+
+stmt.free();
+
+
+database.saveDB();
+
+
+res.json({
+
+message:"updated"
+
+});
+
+
+});
+
+
+app.listen(
+PORT,
+"0.0.0.0",
+()=>{
+
+
+console.log("");
+
+console.log("========================");
+
+console.log(
+" Elite Auction SQLite Server "
+);
+
+console.log(
+"http://127.0.0.1:3000"
+);
+
+console.log("========================");
+
+
+});
+
+
+}
+
+
+start();

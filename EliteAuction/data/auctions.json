@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "title": "تويوتا لاندكروزر 2023",
+    "description": "سيارة بحالة ممتازة",
+    "category": "سيارات",
+    "price": 38000
+  },
+  {
+    "id": 2,
+    "title": "شقة فاخرة",
+    "description": "شقة للبيع في موقع مميز",
+    "category": "عقارات",
+    "price": 50000
+  },
+  {
+    "image": null,
+    "id": 1784135958091,
+    "title": "",
+    "description": "",
+    "category": "",
+    "price": ""
+  },
+  {
+    "image": "/uploads/1784137253375-image.webp",
+    "id": 1784137253438,
+    "title": "القيصر",
+    "description": "رافعة",
+    "category": "جديد",
+    "price": "8000"
+  }
+]
