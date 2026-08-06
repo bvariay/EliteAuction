@@ -1,8 +1,0 @@
-{
-  "appId": "com.eliteauction.app",
-  "appName": "EliteAuction",
-  "webDir": "public",
-  "server": {
-    "androidScheme": "https"
-  }
-}
